@@ -1,3 +1,5 @@
 kafka-tool.iml           
+kafka-manager.iml
 target/*
 .idea/*
+logs/*

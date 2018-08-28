@@ -1,0 +1,184 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Kafka Manager</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link href="../bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet" charset="utf-8" />
+    <link href="../css/common.css" rel="stylesheet" charset="utf-8" />
+
+    <script src="/webjars/jquery/jquery.min.js"></script>
+    <script src="/webjars/sockjs-client/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/stomp.min.js"></script>
+
+    <style>
+        .nav-height{
+            height: 50px;
+        }
+
+        .container-title{
+            height: 95px;
+            margin-bottom: 20px;
+            background-color: #fafbfc;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        .container-title-content{
+            margin-top: -5px;
+        }
+
+        .pointer{
+            cursor:pointer
+        }
+
+        .topic-detail{
+            color:#12899c;
+            cursor:pointer;
+        }
+
+        .success{
+            color:#24a515;
+        }
+
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <!-- We use the fluid option here to avoid overriding the fixed width of a normal container within the narrow content columns. -->
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand jsurl" href="javascript:void(0);" data-url="/client"><span class="glyphicon glyphicon-asterisk"></span> Kafka</a>
+        </div>
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li class="active"><a class="jsurl" href="javascript:void(0);" data-url="/client">Client</a></li>
+                <li><a class="jsurl" href="javascript:void(0);" data-url="/monitor">Monitor</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="clearfix nav-height"></div>
+<div class="container-fluid container-title">
+    <div class="container-fluid container-title-content">
+        <h1>Kafka Manager</h1>
+        <p>Brokers : <span id="broker-list" class="success"></span></p>
+    </div>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    kafka topic
+                    <span class="glyphicon glyphicon-menu-hamburger pull-right pointer" id="topic-list"></span>
+                </div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <label>topic</label>
+                        <input name="topic" type="text" class="form-control" placeholder="topic" />
+                    </div>
+                    <div class="col-md-6" style="padding: 0px;padding-right: 10px">
+                        <div class="form-group">
+                            <label>partition</label>
+                            <input  name="partition" type="text" class="form-control" placeholder="partition" />
+                        </div>
+                    </div><!-- .col-md-6 -->
+                    <div class="col-md-6" style="padding: 0px">
+                        <div class="form-group">
+                            <label>replication</label>
+                            <input name="replication" type="text" class="form-control" placeholder="replication" />
+                        </div>
+                    </div><!-- .col-md-6 -->
+                    <button type="button" class="form-control btn btn-default" id="create-topic"><span class="success">create topic</span></button>
+                </div>
+            </div><!-- .panel -->
+            <div class="panel panel-default">
+                <div class="panel-heading">kafka producer</div>
+                <div class="panel-body">
+                    <textarea name="producer-msg" class="form-control" rows="14" id="producer-text"></textarea><br/>
+                </div>
+            </div><!-- .panel -->
+        </div>
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading" style="height:55px">
+                    <div class="pull-left" style="padding-top: 7px">kafka consumer</div>
+                    <div class="form-inline pull-right">
+                        <div class="form-group">
+                            <input type="text" name="consumer-partition" class="form-control" placeholder="partition" />
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="offset" class="form-control" placeholder="offset" />
+                        </div>
+                        <button class="btn btn-default" onclick="$('#console').empty()">clear</button>
+                        <button class="btn btn-success" id="start-consumer">start</button>
+                        <button class="btn btn-danger" id="stop-consumer">stop</button>
+                    </div>
+
+                </div>
+                <div class="panel-body" id="console" style="overflow-y:auto;background-color:#333; color: #ffffff;height: 600px;margin-left:-1px;margin-right:-1px;">
+                    <h1 style="font-size: 36px;">kafka consumer</h1>
+                </div>
+            </div><!-- .panel -->
+        </div>
+    </div><!-- .row -->
+</div><!-- .container-fluid -->
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="alert-model" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="alertModalLabel">Tip</h4>
+            </div>
+            <div class="modal-body" id="alert-model-content">
+                success
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="topic-list-model" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" style="height:600px;overflow-y:auto">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+            </div>
+            <div class="modal-body" id="topic-list-content">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Small modal -->
+<div class="modal fade" id="remove-model" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">WARN</h4>
+            </div>
+            <div class="modal-body">
+                <p>remove.......</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger btn-sm" id="remove-confirm">confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+<script src="../jquery/jquery-2.2.3.min.js"></script>
+<script src="../bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+<script src="../js/websocket.js"></script>
+<script src="../js/common.js"></script>
+<script src="../js/kafka-client.js"></script>
+<script>
+
+</script>
+</html>
